@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { Lock, Unlock, Plus, RefreshCw, Trash2, AlertTriangle } from 'lucide-react';
 
-const API_URL = 'https://imf-gadgets-api-ztqw.onrender.com'; // Replace with your Render API URL
+const API_URL = import.meta.env.VITE_API_URL;
 
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -29,7 +29,7 @@ const App = () => {
         console.log('Attempting login...'); // Debug log
 
         try {
-            const response = await fetch('https://imf-gadgets-api-ztqw.onrender.com/auth/login', {
+            const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST', // Ensure this is POST
                 headers: {
                     'Content-Type': 'application/json'
