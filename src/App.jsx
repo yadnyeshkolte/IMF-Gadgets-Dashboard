@@ -1,286 +1,301 @@
-import { useState, useEffect } from 'react';
-import { AlertCircle, Plus, RefreshCw, Trash2 } from 'lucide-react';
-import { Alert, AlertDescription } from './components/ui/alert';
-import { Button } from './components/ui/button';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
-import { Input } from './components/ui/input';
-import { Select } from './components/ui/select';
+import { Lock, Unlock, Plus, RefreshCw, Trash2, AlertTriangle } from 'lucide-react';
 
-const API_URL = 'https://imf-gadgets-api-ztqw.onrender.com';
+const API_URL = 'https://imf-gadgets-api-ztqw.onrender.com'; // Replace with your Render API URL
 
-const Login = ({ onLogin }) => {
-    const [credentials, setCredentials] = useState({ username: '', password: '' });
+const App = () => {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [token, setToken] = useState('');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [gadgets, setGadgets] = useState([]);
+    const [newGadgetName, setNewGadgetName] = useState('');
     const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError('');
+    useEffect(() => {
+        const storedToken = localStorage.getItem('token');
+        if (storedToken) {
+            setToken(storedToken);
+            setIsLoggedIn(true);
+            fetchGadgets(storedToken);
+        }
+    }, []);
 
+    const fetchGadgets = async (currentToken) => {
         try {
-            console.log('Attempting login with:', credentials.username);
+            setLoading(true);
+            const response = await fetch(`${API_URL}/gadgets`, {
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setGadgets(data);
+            }
+        } catch (err) {
+            setError('Failed to fetch gadgets');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        try {
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(credentials),
+                body: JSON.stringify({ username, password })
             });
 
-            const data = await response.json();
-            console.log('Login response status:', response.status);
-
             if (response.ok) {
-                console.log('Login successful');
-                onLogin(data.token);
+                const data = await response.json();
+                setToken(data.token);
+                localStorage.setItem('token', data.token);
+                setIsLoggedIn(true);
+                fetchGadgets(data.token);
+                setError('');
             } else {
-                console.error('Login failed:', data.error);
-                setError(data.error || 'Login failed');
+                setError('Invalid credentials');
             }
         } catch (err) {
-            console.error('Login error:', err);
-            setError('Failed to connect to server. Please try again.');
-        } finally {
-            setIsLoading(false);
+            setError('Login failed');
         }
     };
 
-    return (
-        <Card className="w-full max-w-md mx-auto mt-8">
-            <CardHeader>
-                <CardTitle>IMF Gadget System Login</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <Input
-                        placeholder="Username"
-                        value={credentials.username}
-                        onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
-                        disabled={isLoading}
-                    />
-                    <Input
-                        type="password"
-                        placeholder="Password"
-                        value={credentials.password}
-                        onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
-                        disabled={isLoading}
-                    />
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? 'Logging in...' : 'Login'}
-                    </Button>
-                    {error && (
-                        <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    )}
-                </form>
-            </CardContent>
-        </Card>
-    );
-};
-
-const GadgetDashboard = ({ token }) => {
-    const [gadgets, setGadgets] = useState([]);
-    const [newGadget, setNewGadget] = useState({ name: '' });
-    const [error, setError] = useState('');
-    const [filter, setFilter] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-
-    const fetchGadgets = async () => {
-        setIsLoading(true);
-        setError('');
-
-        try {
-            const url = filter ? `${API_URL}/gadgets?status=${filter}` : `${API_URL}/gadgets`;
-            console.log('Fetching gadgets from:', url);
-
-            const response = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            console.log('Fetch response status:', response.status);
-            const data = await response.json();
-
-            if (response.ok) {
-                console.log('Fetched gadgets:', data);
-                setGadgets(data);
-            } else {
-                console.error('Failed to fetch gadgets:', data);
-                setError(data.error || 'Failed to fetch gadgets');
-            }
-        } catch (err) {
-            console.error('Fetch error:', err);
-            setError('Failed to connect to server. Please try again.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (token) {
-            fetchGadgets();
-        }
-    }, [filter, token]);
-
-    const handleAddGadget = async (e) => {
+    const handleRegister = async (e) => {
         e.preventDefault();
-        if (!newGadget.name.trim()) return;
-
         try {
-            console.log('Adding new gadget:', newGadget);
+            const response = await fetch(`${API_URL}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setToken(data.token);
+                localStorage.setItem('token', data.token);
+                setIsLoggedIn(true);
+                setError('');
+            } else {
+                setError('Registration failed');
+            }
+        } catch (err) {
+            setError('Registration failed');
+        }
+    };
+
+    const handleLogout = () => {
+        setToken('');
+        setIsLoggedIn(false);
+        localStorage.removeItem('token');
+        setGadgets([]);
+    };
+
+    const addGadget = async () => {
+        try {
             const response = await fetch(`${API_URL}/gadgets`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(newGadget)
+                body: JSON.stringify({ name: newGadgetName })
             });
 
             if (response.ok) {
-                console.log('Gadget added successfully');
-                setNewGadget({ name: '' });
-                fetchGadgets();
-            } else {
-                const data = await response.json();
-                console.error('Failed to add gadget:', data);
-                setError(data.error || 'Failed to add gadget');
+                setNewGadgetName('');
+                fetchGadgets(token);
             }
         } catch (err) {
-            console.error('Add gadget error:', err);
-            setError('Failed to connect to server. Please try again.');
+            setError('Failed to add gadget');
         }
     };
 
-    const handleSelfDestruct = async (id) => {
+    const handleStatusUpdate = async (id, newStatus) => {
         try {
-            console.log('Self-destructing gadget:', id);
-            const response = await fetch(`${API_URL}/gadgets/${id}/self-destruct`, {
-                method: 'POST',
+            let endpoint = `${API_URL}/gadgets/${id}`;
+            let method = 'PATCH';
+            let body = { status: newStatus };
+
+            if (newStatus === 'Destroyed') {
+                endpoint = `${API_URL}/gadgets/${id}/self-destruct`;
+                method = 'POST';
+                body = {};
+            }
+
+            const response = await fetch(endpoint, {
+                method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(body)
             });
 
             if (response.ok) {
-                console.log('Gadget self-destructed successfully');
-                fetchGadgets();
-            } else {
-                const data = await response.json();
-                console.error('Failed to self-destruct gadget:', data);
-                setError(data.error || 'Failed to self-destruct gadget');
+                fetchGadgets(token);
             }
         } catch (err) {
-            console.error('Self-destruct error:', err);
-            setError('Failed to connect to server. Please try again.');
+            setError('Failed to update gadget');
         }
     };
 
-    if (!token) {
-        return <Alert variant="destructive"><AlertDescription>No authentication token found. Please log in again.</AlertDescription></Alert>;
+    const getStatusColor = (status) => {
+        const colors = {
+            'Available': 'bg-green-100 text-green-800',
+            'Deployed': 'bg-blue-100 text-blue-800',
+            'Destroyed': 'bg-red-100 text-red-800',
+            'Decommissioned': 'bg-gray-100 text-gray-800'
+        };
+        return colors[status] || 'bg-gray-100 text-gray-800';
+    };
+
+    if (!isLoggedIn) {
+        return (
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+                <Card className="w-full max-w-md">
+                    <CardHeader>
+                        <CardTitle className="text-2xl font-bold text-center">IMF Gadget Management</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <form className="space-y-4">
+                            <div>
+                                <input
+                                    type="text"
+                                    placeholder="Username"
+                                    className="w-full p-2 border rounded"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    className="w-full p-2 border rounded"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </div>
+                            {error && <p className="text-red-500 text-sm">{error}</p>}
+                            <div className="flex space-x-4">
+                                <button
+                                    onClick={handleLogin}
+                                    className="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                                >
+                                    <Lock className="inline-block w-4 h-4 mr-2" />
+                                    Login
+                                </button>
+                                <button
+                                    onClick={handleRegister}
+                                    className="flex-1 bg-green-500 text-white p-2 rounded hover:bg-green-600"
+                                >
+                                    <Unlock className="inline-block w-4 h-4 mr-2" />
+                                    Register
+                                </button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+        );
     }
 
     return (
-        <div className="container mx-auto p-4">
-            <Card className="mb-8">
-                <CardHeader>
-                    <CardTitle>IMF Gadget Dashboard</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex gap-4 mb-6">
-                        <form onSubmit={handleAddGadget} className="flex-1 flex gap-2">
-                            <Input
+        <div className="min-h-screen bg-gray-100 p-4">
+            <div className="max-w-6xl mx-auto">
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-3xl font-bold">IMF Gadget Management</h1>
+                    <button
+                        onClick={handleLogout}
+                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                    >
+                        Logout
+                    </button>
+                </div>
+
+                <Card className="mb-6">
+                    <CardContent className="pt-6">
+                        <div className="flex space-x-4">
+                            <input
+                                type="text"
                                 placeholder="New Gadget Name"
-                                value={newGadget.name}
-                                onChange={(e) => setNewGadget({ name: e.target.value })}
-                                disabled={isLoading}
+                                className="flex-1 p-2 border rounded"
+                                value={newGadgetName}
+                                onChange={(e) => setNewGadgetName(e.target.value)}
                             />
-                            <Button type="submit" disabled={isLoading || !newGadget.name.trim()}>
-                                <Plus className="h-4 w-4 mr-2" />Add Gadget
-                            </Button>
-                        </form>
-                        <Select
-                            value={filter}
-                            onChange={(e) => setFilter(e.target.value)}
-                            className="w-48"
-                            disabled={isLoading}
-                        >
-                            <option value="">All Status</option>
-                            <option value="Available">Available</option>
-                            <option value="Deployed">Deployed</option>
-                            <option value="Destroyed">Destroyed</option>
-                            <option value="Decommissioned">Decommissioned</option>
-                        </Select>
-                        <Button onClick={fetchGadgets} disabled={isLoading}>
-                            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                        </Button>
-                    </div>
-
-                    {error && (
-                        <Alert variant="destructive" className="mb-4">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    )}
-
-                    {isLoading ? (
-                        <div className="text-center py-8">Loading gadgets...</div>
-                    ) : gadgets.length === 0 ? (
-                        <div className="text-center py-8">No gadgets found</div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {gadgets.map(gadget => (
-                                <Card key={gadget.id}>
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">{gadget.name}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-gray-600">Codename: {gadget.codename}</p>
-                                        <p className="text-sm text-gray-600">Status: {gadget.status}</p>
-                                        <p className="text-sm text-gray-600">Success Probability: {gadget.missionSuccessProbability}%</p>
-                                        {gadget.status === 'Available' && (
-                                            <Button
-                                                variant="destructive"
-                                                className="mt-4"
-                                                onClick={() => handleSelfDestruct(gadget.id)}
-                                                disabled={isLoading}
-                                            >
-                                                <Trash2 className="h-4 w-4 mr-2" />Self Destruct
-                                            </Button>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            ))}
+                            <button
+                                onClick={addGadget}
+                                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Gadget
+                            </button>
                         </div>
-                    )}
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+
+                {loading ? (
+                    <div className="flex justify-center py-8">
+                        <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {gadgets.map((gadget) => (
+                            <Card key={gadget.id} className="hover:shadow-lg transition-shadow">
+                                <CardHeader>
+                                    <CardTitle className="text-xl">{gadget.name}</CardTitle>
+                                    <p className="text-sm text-gray-500">{gadget.codename}</p>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        <div className={`inline-block px-2 py-1 rounded ${getStatusColor(gadget.status)}`}>
+                                            {gadget.status}
+                                        </div>
+                                        <p className="text-sm">
+                                            Success Probability: {gadget.missionSuccessProbability}%
+                                        </p>
+                                        <div className="flex space-x-2">
+                                            {gadget.status === 'Available' && (
+                                                <button
+                                                    onClick={() => handleStatusUpdate(gadget.id, 'Deployed')}
+                                                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm"
+                                                >
+                                                    Deploy
+                                                </button>
+                                            )}
+                                            {gadget.status !== 'Destroyed' && gadget.status !== 'Decommissioned' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(gadget.id, 'Decommissioned')}
+                                                        className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 text-sm flex items-center"
+                                                    >
+                                                        <Trash2 className="w-4 h-4 mr-1" />
+                                                        Decommission
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(gadget.id, 'Destroyed')}
+                                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm flex items-center"
+                                                    >
+                                                        <AlertTriangle className="w-4 h-4 mr-1" />
+                                                        Self-Destruct
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
-    );
-};
-
-const App = () => {
-    const [token, setToken] = useState(() => localStorage.getItem('token'));
-
-    useEffect(() => {
-        if (token) {
-            localStorage.setItem('token', token);
-        } else {
-            localStorage.removeItem('token');
-        }
-    }, [token]);
-
-    return token ? (
-        <GadgetDashboard
-            token={token}
-            onLogout={() => setToken(null)}
-        />
-    ) : (
-        <Login onLogin={setToken} />
     );
 };
 
