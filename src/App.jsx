@@ -23,46 +23,65 @@ const App = () => {
         }
     }, []);
 
+    const handleLogin = async (e) => {
+        e.preventDefault(); // Important: prevent form submission default behavior
+
+        console.log('Attempting login...'); // Debug log
+
+        try {
+            const response = await fetch('https://imf-gadgets-api-ztqw.onrender.com/auth/login', {
+                method: 'POST', // Ensure this is POST
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+
+            console.log('Response status:', response.status); // Debug log
+
+            const data = await response.json();
+            console.log('Response data:', data); // Debug log
+
+            if (response.ok) {
+                setToken(data.token);
+                localStorage.setItem('token', data.token);
+                setIsLoggedIn(true);
+                setError('');
+            } else {
+                setError(data.error || 'Login failed');
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('Login failed - Network error');
+        }
+    };
+
     const fetchGadgets = async (currentToken) => {
         try {
             setLoading(true);
             const response = await fetch(`${API_URL}/gadgets`, {
                 headers: {
-                    'Authorization': `Bearer ${currentToken}`
+                    'Authorization': `Bearer ${currentToken}`,
+                    'Accept': 'application/json',
                 }
             });
+
             if (response.ok) {
                 const data = await response.json();
                 setGadgets(data);
+            } else {
+                const errorData = await response.json();
+                console.error('Fetch failed:', errorData);
+                setError(errorData.error || 'Failed to fetch gadgets');
             }
         } catch (err) {
-            setError('Failed to fetch gadgets');
+            console.error('Fetch error:', err);
+            setError('Failed to fetch gadgets - please check console for details');
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setToken(data.token);
-                localStorage.setItem('token', data.token);
-                setIsLoggedIn(true);
-                fetchGadgets(data.token);
-                setError('');
-            } else {
-                setError('Invalid credentials');
-            }
-        } catch (err) {
-            setError('Login failed');
         }
     };
 
