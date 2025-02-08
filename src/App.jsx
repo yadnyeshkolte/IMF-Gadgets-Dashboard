@@ -193,11 +193,11 @@ const App = () => {
         const colors = {
             'Available': 'bg-green-100 text-green-800',
             'Deployed': 'bg-blue-100 text-blue-800',
-            'Destroyed': 'bg-red-100 text-red-800',
             'Decommissioned': 'bg-gray-100 text-gray-800'
         };
         return colors[status] || 'bg-gray-100 text-gray-800';
     };
+
 
     if (!isLoggedIn) {
         return (
@@ -293,16 +293,18 @@ const App = () => {
                                                     Deploy
                                                 </Button>
                                             )}
-                                            {gadget.status !== 'Destroyed' && gadget.status !== 'Decommissioned' && (
+                                            {gadget.status !== 'Destroyed' && (
                                                 <>
-                                                    <Button
-                                                        onClick={() => handleStatusUpdate(gadget.id, 'Decommissioned')}
-                                                        variant="outline"
-                                                        size="sm"
-                                                    >
-                                                        <Trash2 className="w-4 h-4 mr-1" />
-                                                        Decommission
-                                                    </Button>
+                                                    {gadget.status !== 'Decommissioned' && (
+                                                        <Button
+                                                            onClick={() => handleStatusUpdate(gadget.id, 'Decommissioned')}
+                                                            variant="outline"
+                                                            size="sm"
+                                                        >
+                                                            <Trash2 className="w-4 h-4 mr-1" />
+                                                            Decommission
+                                                        </Button>
+                                                    )}
                                                     <Button
                                                         onClick={() => handleStatusUpdate(gadget.id, 'Destroyed')}
                                                         variant="destructive"
