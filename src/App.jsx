@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { Lock, Unlock, Plus, RefreshCw, Trash2, AlertTriangle } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL;
+//API URL env
 
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
