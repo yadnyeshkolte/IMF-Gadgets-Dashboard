@@ -4,7 +4,10 @@
 
 - **Web Application**: [GitHub Pages Deployment](https://yadnyeshkolte.github.io/imf-gadgets-dashboards/)
 - **API Backend**: [GitHub Repo](https://github.com/yadnyeshkolte/imf-gadgets-api)
-- **Demo Video**: [Watch Full Demo](your-video-url)
+- **Demo Video**:
+- 
+![Recording](public/recording.mp4)
+
 #### Prerequisites
 ```bash
 node.js >= 14.0.0
@@ -54,15 +57,6 @@ npm run dev
 - Two-step self-destruct confirmation
 - Status-based access control
 - Session management
-
-### 🎥 Demo Video Highlights
-
-1. User Registration & Login
-2. Adding New Gadgets
-3. Status Management
-4. Filtering System
-5. Self-Destruct Mechanism
-6. Mobile Responsiveness
 
 ### 💾 Database Schema
 
@@ -138,3 +132,4 @@ CREATE TABLE gadgets (
 ### 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
