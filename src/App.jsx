@@ -208,6 +208,14 @@ const App = () => {
     if (!isLoggedIn) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+                <div className="fixed top-0 left-0 right-0">
+                    <div className="bg-violet-100 p-3 text-center text-violet-700">
+                        Please note: Initial login may take up to 50 seconds since we use a free hosting service that goes to sleep when inactive.
+                    </div>
+                    <div className="bg-red-100 p-1 text-center text-red-700 text-sm">
+                        Your free instance will spin down with inactivity, which can delay requests by 50 seconds or more. - render.com
+                    </div>
+                </div>
                 <Card className="w-full max-w-md">
                     <CardHeader>
                         <CardTitle className="text-2xl font-bold text-center">IMF Gadget Management</CardTitle>
@@ -229,11 +237,11 @@ const App = () => {
                             {error && <p className="text-red-500 text-sm">{error}</p>}
                             <div className="flex space-x-4">
                                 <Button onClick={handleLogin} className="flex-1">
-                                    <Lock className="w-4 h-4 mr-2" />
+                                    <Lock className="w-4 h-4 mr-2"/>
                                     Login
                                 </Button>
                                 <Button onClick={handleRegister} variant="secondary" className="flex-1">
-                                    <Unlock className="w-4 h-4 mr-2" />
+                                    <Unlock className="w-4 h-4 mr-2"/>
                                     Register
                                 </Button>
                             </div>
@@ -253,7 +261,7 @@ const App = () => {
                 </div>
 
                 <Card className="mb-6">
-                    <CardContent className="pt-6">
+                <CardContent className="pt-6">
                             <GadgetControls
                                 onAddGadget={addGadget}
                                 onFilterChange={(status) => fetchGadgets(token, status)}
