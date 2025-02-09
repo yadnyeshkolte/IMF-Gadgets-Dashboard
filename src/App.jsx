@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { Lock, Unlock, Plus, RefreshCw, Trash2, AlertTriangle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './components/ui/dialog';
+import { Button } from './components/ui/button';
+import { Input } from './components/ui/input';
 
 const API_URL = import.meta.env.VITE_API_URL;
-//API URL env
 
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -14,6 +16,10 @@ const App = () => {
     const [newGadgetName, setNewGadgetName] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [selfDestructDialog, setSelfDestructDialog] = useState({ open: false, gadgetId: null });
+    const [confirmationCode, setConfirmationCode] = useState('');
+    const [enteredCode, setEnteredCode] = useState('');
+    const [selfDestructError, setSelfDestructError] = useState('');
 
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
@@ -25,27 +31,15 @@ const App = () => {
     }, []);
 
     const handleLogin = async (e) => {
-        e.preventDefault(); // Important: prevent form submission default behavior
-
-        console.log('Attempting login...'); // Debug log
-
+        e.preventDefault();
         try {
             const response = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST', // Ensure this is POST
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                })
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
             });
 
-            console.log('Response status:', response.status); // Debug log
-
             const data = await response.json();
-            console.log('Response data:', data); // Debug log
-
             if (response.ok) {
                 setToken(data.token);
                 localStorage.setItem('token', data.token);
@@ -55,7 +49,6 @@ const App = () => {
                 setError(data.error || 'Login failed');
             }
         } catch (err) {
-            console.error('Login error:', err);
             setError('Login failed - Network error');
         }
     };
@@ -75,12 +68,10 @@ const App = () => {
                 setGadgets(data);
             } else {
                 const errorData = await response.json();
-                console.error('Fetch failed:', errorData);
                 setError(errorData.error || 'Failed to fetch gadgets');
             }
         } catch (err) {
-            console.error('Fetch error:', err);
-            setError('Failed to fetch gadgets - please check console for details');
+            setError('Failed to fetch gadgets');
         } finally {
             setLoading(false);
         }
@@ -138,23 +129,31 @@ const App = () => {
 
     const handleStatusUpdate = async (id, newStatus) => {
         try {
-            let endpoint = `${API_URL}/gadgets/${id}`;
-            let method = 'PATCH';
-            let body = { status: newStatus };
-
             if (newStatus === 'Destroyed') {
-                endpoint = `${API_URL}/gadgets/${id}/self-destruct`;
-                method = 'POST';
-                body = {};
+                // Request confirmation code first
+                const response = await fetch(`${API_URL}/gadgets/${id}/request-destruction`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setConfirmationCode(data.confirmationCode);
+                    setSelfDestructDialog({ open: true, gadgetId: id });
+                    setSelfDestructError('');
+                    return;
+                }
             }
 
-            const response = await fetch(endpoint, {
-                method,
+            const response = await fetch(`${API_URL}/gadgets/${id}`, {
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(body)
+                body: JSON.stringify({ status: newStatus })
             });
 
             if (response.ok) {
@@ -162,6 +161,31 @@ const App = () => {
             }
         } catch (err) {
             setError('Failed to update gadget');
+        }
+    };
+
+    const handleSelfDestruct = async () => {
+        try {
+            const response = await fetch(`${API_URL}/gadgets/${selfDestructDialog.gadgetId}/self-destruct`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ confirmationCode: enteredCode })
+            });
+
+            if (response.ok) {
+                setSelfDestructDialog({ open: false, gadgetId: null });
+                setEnteredCode('');
+                setConfirmationCode('');
+                fetchGadgets(token);
+            } else {
+                const data = await response.json();
+                setSelfDestructError(data.error || 'Self-destruct failed');
+            }
+        } catch (err) {
+            setSelfDestructError('Self-destruct failed - Network error');
         }
     };
 
@@ -184,40 +208,28 @@ const App = () => {
                     </CardHeader>
                     <CardContent>
                         <form className="space-y-4">
-                            <div>
-                                <input
-                                    type="text"
-                                    placeholder="Username"
-                                    className="w-full p-2 border rounded"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <input
-                                    type="password"
-                                    placeholder="Password"
-                                    className="w-full p-2 border rounded"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                />
-                            </div>
+                            <Input
+                                type="text"
+                                placeholder="Username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                            />
+                            <Input
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
                             {error && <p className="text-red-500 text-sm">{error}</p>}
                             <div className="flex space-x-4">
-                                <button
-                                    onClick={handleLogin}
-                                    className="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-                                >
-                                    <Lock className="inline-block w-4 h-4 mr-2" />
+                                <Button onClick={handleLogin} className="flex-1">
+                                    <Lock className="w-4 h-4 mr-2" />
                                     Login
-                                </button>
-                                <button
-                                    onClick={handleRegister}
-                                    className="flex-1 bg-green-500 text-white p-2 rounded hover:bg-green-600"
-                                >
-                                    <Unlock className="inline-block w-4 h-4 mr-2" />
+                                </Button>
+                                <Button onClick={handleRegister} variant="secondary" className="flex-1">
+                                    <Unlock className="w-4 h-4 mr-2" />
                                     Register
-                                </button>
+                                </Button>
                             </div>
                         </form>
                     </CardContent>
@@ -231,31 +243,22 @@ const App = () => {
             <div className="max-w-6xl mx-auto">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-3xl font-bold">IMF Gadget Management</h1>
-                    <button
-                        onClick={handleLogout}
-                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                    >
-                        Logout
-                    </button>
+                    <Button variant="destructive" onClick={handleLogout}>Logout</Button>
                 </div>
 
                 <Card className="mb-6">
                     <CardContent className="pt-6">
                         <div className="flex space-x-4">
-                            <input
+                            <Input
                                 type="text"
                                 placeholder="New Gadget Name"
-                                className="flex-1 p-2 border rounded"
                                 value={newGadgetName}
                                 onChange={(e) => setNewGadgetName(e.target.value)}
                             />
-                            <button
-                                onClick={addGadget}
-                                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center"
-                            >
+                            <Button onClick={addGadget} className="bg-green-500 hover:bg-green-600">
                                 <Plus className="w-4 h-4 mr-2" />
                                 Add Gadget
-                            </button>
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -282,29 +285,32 @@ const App = () => {
                                         </p>
                                         <div className="flex space-x-2">
                                             {gadget.status === 'Available' && (
-                                                <button
+                                                <Button
                                                     onClick={() => handleStatusUpdate(gadget.id, 'Deployed')}
-                                                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm"
+                                                    variant="secondary"
+                                                    size="sm"
                                                 >
                                                     Deploy
-                                                </button>
+                                                </Button>
                                             )}
                                             {gadget.status !== 'Destroyed' && gadget.status !== 'Decommissioned' && (
                                                 <>
-                                                    <button
+                                                    <Button
                                                         onClick={() => handleStatusUpdate(gadget.id, 'Decommissioned')}
-                                                        className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 text-sm flex items-center"
+                                                        variant="outline"
+                                                        size="sm"
                                                     >
                                                         <Trash2 className="w-4 h-4 mr-1" />
                                                         Decommission
-                                                    </button>
-                                                    <button
+                                                    </Button>
+                                                    <Button
                                                         onClick={() => handleStatusUpdate(gadget.id, 'Destroyed')}
-                                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm flex items-center"
+                                                        variant="destructive"
+                                                        size="sm"
                                                     >
                                                         <AlertTriangle className="w-4 h-4 mr-1" />
                                                         Self-Destruct
-                                                    </button>
+                                                    </Button>
                                                 </>
                                             )}
                                         </div>
@@ -314,6 +320,45 @@ const App = () => {
                         ))}
                     </div>
                 )}
+
+                <Dialog open={selfDestructDialog.open} onOpenChange={(open) => {
+                    if (!open) {
+                        setSelfDestructDialog({ open: false, gadgetId: null });
+                        setEnteredCode('');
+                        setSelfDestructError('');
+                    }
+                }}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Confirm Self-Destruct</DialogTitle>
+                        </DialogHeader>
+                        <div className="py-4">
+                            <p className="text-sm text-gray-500 mb-4">
+                                A confirmation code has been generated. Please enter it below to confirm self-destruct:
+                            </p>
+                            <p className="text-lg font-mono text-center mb-4 text-red-500">
+                                {confirmationCode}
+                            </p>
+                            <Input
+                                type="text"
+                                placeholder="Enter confirmation code"
+                                value={enteredCode}
+                                onChange={(e) => setEnteredCode(e.target.value)}
+                            />
+                            {selfDestructError && (
+                                <p className="text-red-500 text-sm mt-2">{selfDestructError}</p>
+                            )}
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setSelfDestructDialog({ open: false, gadgetId: null })}>
+                                Cancel
+                            </Button>
+                            <Button variant="destructive" onClick={handleSelfDestruct}>
+                                Confirm Self-Destruct
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     );
