@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import {
     Select,
     SelectContent,
@@ -9,7 +8,7 @@ import {
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
-import { Plus, Filter } from "lucide-react";
+import { Filter } from "lucide-react";
 
 const GadgetControls = ({ onAddGadget, onFilterChange, newGadgetName, setNewGadgetName }) => {
     const statuses = ["All", "Available", "Deployed", "Destroyed", "Decommissioned"];
@@ -27,7 +26,6 @@ const GadgetControls = ({ onAddGadget, onFilterChange, newGadgetName, setNewGadg
                             className="flex-1"
                         />
                         <Button onClick={onAddGadget} className="bg-green-500 hover:bg-green-600 whitespace-nowrap">
-                            <Plus className="w-4 h-4 mr-2" />
                             Add Gadget
                         </Button>
                     </div>
