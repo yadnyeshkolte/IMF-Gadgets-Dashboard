@@ -45,6 +45,7 @@ const App = () => {
                 localStorage.setItem('token', data.token);
                 setIsLoggedIn(true);
                 setError('');
+                await fetchGadgets(data.token);
             } else {
                 setError(data.error || 'Login failed');
             }
@@ -92,6 +93,7 @@ const App = () => {
                 localStorage.setItem('token', data.token);
                 setIsLoggedIn(true);
                 setError('');
+                await fetchGadgets(data.token);
             } else {
                 setError('Registration failed');
             }
