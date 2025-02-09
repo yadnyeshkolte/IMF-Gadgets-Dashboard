@@ -5,8 +5,8 @@
 - **Web Application**: [GitHub Pages Deployment](https://yadnyeshkolte.github.io/imf-gadgets-dashboards/)
 - **API Backend**: [GitHub Repo](https://github.com/yadnyeshkolte/imf-gadgets-api)
 - **Demo Video**:
-- 
-![Recording](public/recording.mp4)
+
+[Recording](https://github.com/user-attachments/assets/493a54af-261a-4e38-abb4-6bad599bf94f)
 
 #### Prerequisites
 ```bash
@@ -18,8 +18,8 @@ npm >= 6.0.0
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/imf-gadget-management.git
-cd imf-gadget-management
+git clone https://github.com/yadnyeshkolte/imf-gadgets-dashboards.git
+cd mf-gadgets-dashboards
 ```
 
 2. Install dependencies:
@@ -30,6 +30,8 @@ npm install
 3. Create a `.env` file:
 ```bash
 VITE_API_URL=your_render_api_url
+#Remember dont forget to create Database and link it in .env for api web service
+#API backend code in https://github.com/yadnyeshkolte/imf-gadgets-api
 ```
 
 4. Start the development server:
