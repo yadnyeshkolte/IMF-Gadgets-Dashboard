@@ -4,6 +4,7 @@ import { Lock, Unlock, Plus, RefreshCw, Trash2, AlertTriangle } from 'lucide-rea
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './components/ui/dialog';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
+import GadgetControls from './GadgetControls.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -54,10 +55,14 @@ const App = () => {
         }
     };
 
-    const fetchGadgets = async (currentToken) => {
+    const fetchGadgets = async (currentToken, status = 'All') => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_URL}/gadgets`, {
+            const url = status === 'All'
+                ? `${API_URL}/gadgets`
+                : `${API_URL}/gadgets?status=${status}`;
+
+            const response = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${currentToken}`,
                     'Accept': 'application/json',
@@ -77,7 +82,6 @@ const App = () => {
             setLoading(false);
         }
     };
-
     const handleRegister = async (e) => {
         e.preventDefault();
         try {
@@ -250,18 +254,12 @@ const App = () => {
 
                 <Card className="mb-6">
                     <CardContent className="pt-6">
-                        <div className="flex space-x-4">
-                            <Input
-                                type="text"
-                                placeholder="New Gadget Name"
-                                value={newGadgetName}
-                                onChange={(e) => setNewGadgetName(e.target.value)}
+                            <GadgetControls
+                                onAddGadget={addGadget}
+                                onFilterChange={(status) => fetchGadgets(token, status)}
+                                newGadgetName={newGadgetName}
+                                setNewGadgetName={setNewGadgetName}
                             />
-                            <Button onClick={addGadget} className="bg-green-500 hover:bg-green-600">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Add Gadget
-                            </Button>
-                        </div>
                     </CardContent>
                 </Card>
 
