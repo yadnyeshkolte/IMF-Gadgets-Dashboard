@@ -6,7 +6,7 @@
 - **API Backend**: [GitHub Repo](https://github.com/yadnyeshkolte/imf-gadgets-api)
 - **Demo Video**:
 
-[Recording](https://github.com/user-attachments/assets/493a54af-261a-4e38-abb4-6bad599bf94f)
+[Recording](https://github.com/user-attachments/assets/13eb1669-6ef0-4db1-bda8-30dce3badbde)
 
 #### Prerequisites
 ```bash
